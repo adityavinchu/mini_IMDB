@@ -1,26 +1,37 @@
-// Wait for the DOM content to be fully loaded before executing the script
 document.addEventListener('DOMContentLoaded', () => {
-    // DOM elements
-    const searchBox = document.getElementById('search-box'); // Search input element
-    const searchBtn = document.getElementById('search-btn'); // Search button element
-    const cardContainer = document.getElementById('card-container'); // Container to hold movie cards
-    const favoritesBtn = document.getElementById('favorites-btn'); // Button to navigate to favorites page
-    const apiKey = 'a5637de';  // API key for OMDB
+    const searchBox = document.getElementById('search-box');
+    const searchBtn = document.getElementById('search-btn');
+    const cardContainer = document.getElementById('card-container');
+    const favoritesBtn = document.getElementById('favorites-btn'); // Favorites button
   
-    // Fetch movies with a default search term 'Batman' when the page loads
-    fetchMovies('Batman');
+    const apiKey = 'a5637de'; // Your OMDB API key
+    let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+    let searchResults = JSON.parse(localStorage.getItem('searchResults')) || [];
   
-    // Event listener for the search button click
+    // Load and display previously searched movies
+    displayMovies(searchResults);
+  
+    // Event listener for search button click
     searchBtn.addEventListener('click', () => {
-      const query = searchBox.value;
+      const query = searchBox.value.trim();
       if (query) {
         fetchMovies(query);
       }
     });
   
-    // Event listener for the favorites button click
+    // Event listener for Enter key in search box
+    searchBox.addEventListener('keypress', (event) => {
+      if (event.key === 'Enter') {
+        const query = searchBox.value.trim();
+        if (query) {
+          fetchMovies(query);
+        }
+      }
+    });
+  
+    // Event listener for Favorites button click
     favoritesBtn.addEventListener('click', () => {
-      window.location.href = 'favorites.html'; // Redirect to favorites page
+      window.location.href = 'favorites.html'; // Navigate to favorites.html
     });
   
     // Function to fetch movies from OMDB API based on a search query
@@ -35,87 +46,86 @@ document.addEventListener('DOMContentLoaded', () => {
           return response.json();
         })
         .then(data => {
-          console.log('Response data:', data);  
-          cardContainer.innerHTML = '';  // Clear previous results
+          console.log('Response data:', data);
+          cardContainer.innerHTML = ''; // Clear previous results
   
-          // Check if there are any search results
           if (data.Search && data.Search.length > 0) {
-            // Iterate over each movie result and create a card for it
-            data.Search.forEach(movie => {
-              const card = createCard(movie);
-              cardContainer.appendChild(card);
-            });
+            searchResults = data.Search;
+            localStorage.setItem('searchResults', JSON.stringify(searchResults));
+            displayMovies(searchResults);
           } else {
-            // Display a message when no results are found
             cardContainer.innerHTML = '<p>No results found.</p>';
+            localStorage.removeItem('searchResults');
           }
         })
         .catch(error => console.error('Error fetching data:', error));
     }
   
+    // Function to display movies
+    function displayMovies(movies) {
+      cardContainer.innerHTML = ''; // Clear previous results
+      movies.forEach(movie => {
+        const card = createCard(movie);
+        cardContainer.appendChild(card);
+      });
+    }
+  
     // Function to create a movie card based on the movie object
     function createCard(movie) {
       const card = document.createElement('div');
-      card.className = 'card col-md-3 mb-3';  // Bootstrap card styling
-      card.style.width = '16rem';  // Card width
-      card.style.margin = '8px';   // Card margin
+      card.className = 'card col-md-3 mb-3 p-3';
+      card.style.width = '14rem';
   
-      // Create image element for the movie poster
       const img = document.createElement('img');
       img.className = 'card-img-top';
-      // Set poster image or fallback to a placeholder image
-      img.src = movie.Poster !== "N/A" ? movie.Poster : 'assets/placeholder.png';
+      img.src = movie.Poster !== 'N/A' ? movie.Poster : 'assets/placeholder.png';
       img.alt = movie.Title;
       card.appendChild(img);
   
-      // Create card body for movie details
       const cardBody = document.createElement('div');
-      cardBody.className = 'card-body';
-      card.appendChild(cardBody);
+      cardBody.className = 'card-body d-flex flex-column'; // Use flexbox to align items
   
-      // Create card title element
       const cardTitle = document.createElement('h5');
       cardTitle.className = 'card-title';
       cardTitle.textContent = movie.Title;
       cardBody.appendChild(cardTitle);
   
-      // Create paragraph element for movie year
       const cardText = document.createElement('p');
       cardText.className = 'card-text';
       cardText.textContent = `Year: ${movie.Year}`;
       cardBody.appendChild(cardText);
   
-      // Create favorite button for adding/removing from favorites
-      const favoriteButton = document.createElement('button');
-      favoriteButton.className = 'btn btn-primary';
-      favoriteButton.textContent = 'Favorite';
-      favoriteButton.addEventListener('click', () => {
-        handleFavorite(movie);
+      // Button to add movie to favorites
+      const addToFavoritesBtn = document.createElement('button');
+      addToFavoritesBtn.className = 'btn btn-success mt-auto';
+      addToFavoritesBtn.textContent = 'Add to Favorites';
+      addToFavoritesBtn.addEventListener('click', () => {
+        addToFavorites(movie);
       });
-      cardBody.appendChild(favoriteButton);
+      cardBody.appendChild(addToFavoritesBtn);
+  
+      // View Details button
+      const viewDetailsBtn = document.createElement('a');
+      viewDetailsBtn.className = 'btn btn-primary mt-2'; // mt-2 for spacing
+      viewDetailsBtn.textContent = 'View Details';
+      viewDetailsBtn.href = `movie-details.html?imdbID=${movie.imdbID}`;
+      cardBody.appendChild(viewDetailsBtn);
+  
+      card.appendChild(cardBody);
   
       return card;
     }
   
-    // Function to handle adding/removing a movie from favorites
-    function handleFavorite(movie) {
-      // Retrieve favorites from localStorage or initialize as empty array
-      let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
-      // Check if the movie is already favorited
-      const isFavorited = favorites.some(fav => fav.imdbID === movie.imdbID);
-      
-      // Toggle favorite status
-      if (isFavorited) {
-        // Remove from favorites
-        favorites = favorites.filter(fav => fav.imdbID !== movie.imdbID);
-        alert(`${movie.Title} removed from favorites`);
-      } else {
-        // Add to favorites
+    // Function to add a movie to favorites
+    function addToFavorites(movie) {
+      const existsInFavorites = favorites.some(fav => fav.imdbID === movie.imdbID);
+      if (!existsInFavorites) {
         favorites.push(movie);
-        alert(`${movie.Title} added to favorites`);
+        localStorage.setItem('favorites', JSON.stringify(favorites));
+        alert(`${movie.Title} added to favorites!`);
+      } else {
+        alert(`${movie.Title} is already in favorites!`);
       }
-  
-      // Save updated favorites back to localStorage
-      localStorage.setItem('favorites', JSON.stringify(favorites));
     }
-});
+  });
+  

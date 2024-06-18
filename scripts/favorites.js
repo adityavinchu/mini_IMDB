@@ -65,4 +65,5 @@ document.addEventListener('DOMContentLoaded', () => {
       localStorage.setItem('favorites', JSON.stringify(favorites)); // Save updated favorites to localStorage
       displayFavoriteMovies(); // Refresh the displayed list of favorite movies
     }
-});
+  });
+  
