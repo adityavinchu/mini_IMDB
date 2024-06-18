@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Movie Search</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container my-4">
+        <h1>Mini-IMDb</h1>
+        <div class="input-group mb-3">
+          <input type="text" id="search-box" class="form-control" placeholder="Search for a Movie..." aria-label="Search for a Movie..." aria-describedby="button-addon2">
+          <div class="input-group-append">
+            <button class="btn btn-primary" type="button" id="search-btn">Search</button>
+          </div>
+          <div class="input-group-append ml-2"> 
+            <button id="favorites-btn" class="btn btn-outline-secondary">Favorites</button>
+          </div>
+        </div>
+        <div id="card-container" class="row">
+          <!-- Cards will be appended here -->
+        </div>
+      </div>
+      
+  <script src="scripts/script.js"></script>
+</body>
+</html>
